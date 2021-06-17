@@ -55,6 +55,37 @@ describe('HAL forms', () => {
     expect(deleteAction).to.eql(expectedDeleteAction);
 
   });
+  it('should parse an action without target', async () => {
+
+    const hal = await callFactory({
+      _links: {
+        self: {
+          href: '/foo/1'
+        }
+      },
+      _templates: {
+        default: {
+          method: 'POST',
+        }
+      }
+    });
+
+    const action:any = hal.action('default');
+    delete action.client;
+    delete action.submit;
+
+    const expected: CompareAction = {
+      uri: 'http://example/foo/1',
+      name: 'default',
+      title: undefined,
+      contentType: 'application/json',
+      method: 'POST',
+      fields: [],
+    };
+
+    expect(action).to.eql(expected);
+
+  });
   it('should parse a field', async () => {
 
     const hal = await callFactory({
@@ -142,6 +173,61 @@ describe('HAL forms', () => {
             },
           ]
         }
+      }
+    });
+    const embeddedAction: any = hal.getEmbedded()[0].action('default');
+    delete embeddedAction.client;
+    delete embeddedAction.submit;
+
+    const expected: CompareAction = {
+      uri: 'http://example/foo/1',
+      name: 'default',
+      title: undefined,
+      contentType: 'application/json',
+      method: 'PUT',
+      fields: [
+        {
+          type: 'text',
+          name: 'text',
+          required: false,
+          readOnly: false,
+          label: undefined,
+          pattern: undefined,
+          placeholder: undefined,
+          value: undefined,
+        }
+      ],
+    };
+
+    expect(embeddedAction).to.eql(expected);
+  });
+  it('should parse embedded action without target', async () => {
+    const hal = await callFactory({
+      _links: {
+        self: {
+          href: '/foo'
+        }
+      },
+      _embedded: {
+        content: [{
+          _links: {
+            self: {
+              href: '/foo/1',
+            }
+          },
+          _templates: {
+            default: {
+              method: 'PUT',
+              properties: [
+                {
+                  type: 'text',
+                  name: 'text',
+                },
+              ]
+            }
+          },
+          id: 1,
+        }]
       }
     });
     const embeddedAction: any = hal.getEmbedded()[0].action('default');
